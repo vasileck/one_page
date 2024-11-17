@@ -1,0 +1,94 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Поиск книг</title>
+    <style>
+        .book-result {
+            padding: 8px;
+            border: 1px solid #ccc;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+
+            .book-result:hover {
+                background-color: #f0f0f0;
+            }
+    </style>
+</head>
+<body>
+    <h1>Поиск книг</h1>
+    <input type="text" id="searchInput" placeholder="Введите название книги" />
+    <div id="results"></div>
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('searchInput');
+            const resultsDiv = document.getElementById('results');
+
+            searchInput.addEventListener('input', async () => {
+                const query = searchInput.value.trim();
+                if (query === "") {
+                    resultsDiv.innerHTML = ""; 
+                    return;
+                }
+
+                try {
+                    
+                    const response = await fetch(`/api/book/suggestions?query=${encodeURIComponent(query)}`);
+                    if (!response.ok) {
+                        throw new Error("Ошибка при запросе");
+                    }
+
+                    const books = await response.json();
+
+                   
+                    resultsDiv.innerHTML = "";
+
+                    if (books.length > 0) {
+                        const titleResults = books.filter(book => book.title.toLowerCase().includes(query.toLowerCase()));
+                        const authorResults = books.filter(book => book.author.toLowerCase().includes(query.toLowerCase()));
+
+                     
+                        if (titleResults.length > 0) {
+                            const titleHeader = document.createElement('div');
+                            titleHeader.textContent = "Подсказки по названию:";
+                            resultsDiv.appendChild(titleHeader);
+
+                            titleResults.forEach(book => {
+                                const bookElement = document.createElement('div');
+                                bookElement.classList.add('book-result');
+                                bookElement.innerHTML = `<strong>${book.title}</strong>`;
+                                resultsDiv.appendChild(bookElement);
+                            });
+                        }
+
+                        
+                        if (authorResults.length > 0) {
+                            const authorHeader = document.createElement('div');
+                            authorHeader.textContent = "Подсказки по авторам:";
+                            resultsDiv.appendChild(authorHeader);
+
+                            authorResults.forEach(book => {
+                                const bookElement = document.createElement('div');
+                                bookElement.classList.add('book-result');
+                                bookElement.innerHTML = `<strong>${book.author}</strong>`;
+                                resultsDiv.appendChild(bookElement);
+                            });
+                        }
+                    } else {
+                        resultsDiv.innerHTML = "<p>Нет подходящих подсказок</p>";
+                    }
+                } catch (error) {
+                    console.error(error);
+                    resultsDiv.innerHTML = "<p>Произошла ошибка. Попробуйте позже.</p>";
+                }
+            });
+        });
+</script>
+</body>
+</html>
